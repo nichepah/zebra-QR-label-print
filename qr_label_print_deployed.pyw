@@ -1,10 +1,10 @@
-# 20210612
 # Author : Aneesh PA, RDCIS
+# 20210625
 # Takes input from user to print labels with QR
 # For WRM, BSP 
-# Remember 200 mm offset in the printer; try to reset it on site
-# Also note tkinter, tempFile
-# Database added 20210527
+# Remember 200 mm offset in the printer; try to reset it on site.
+# Sqlite db to store label data; Offset eliminated after AG deployed his modules
+
 
 import tkinter as tk
 import os
@@ -19,7 +19,7 @@ root=tk.Tk()
 
 # the windows size
 root.geometry("400x300")
-root.title("QR Label Designer, CYMS WRM BSP") 
+root.title("QR Label Designer, CYMS WRM BSP")
 root.iconbitmap(myDir+'sail.ico')
 
 # declare string variable
@@ -45,25 +45,26 @@ if not dbexist:
 
 def printLabel(heat, strand, first_coil, last_coil, grade, dia, date, shift):
     f=open(tempFile, "w")
-    myRange=range(int(first_coil), int(last_coil)+1)
-    print(myRange)
+    myRange=range(int(first_coil),int(last_coil)+1)
+    # print(myRange)
     for i in myRange:
         f.writelines('CT~~CD,~CC^~CT~\n')
         f.writelines('^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0^XZ\n')
-        f.writelines('^XA^FO210,35^GFA,264,264,6,,L08,K01C,K07E,K0FF,J01FF8,J03FFC,J07FFE,J0JF,I01JF8,I03FE7FE,I07FC3FF,I0FF81FF8,001FF00FFC,003FE087FE,007FC1C3FF,00FF83E1FF8,01FF07F07FC,03FE0FF83FE,07FC1FFC1FF,07FC3FFE1FF,03FE7IF3FE,01NFC,00FF7IF7F8,007F3FFC7F,003F1FF87E,001F0FF07C,I0F07E078,I0703C07,I0301806,I01J04,,:I08,,I04,007FFC2114,0014084194,0034F83094,0024881094,I040804D6,,::^FS\n')
-        f.writelines('^FO260,40^A0,30^FDSAIL BSP^FS\n')
-        f.writelines('^FO210,100^A0,30^FDGr:'+grade+'^FS\n')
-        f.writelines('^FO210,160^A0,30^FDDia:^FS\n')
-        f.writelines('^FO265,145^A0,50^FD'+dia+'^FS\n')
-        f.writelines('^FO335,160^A0,30^FDmm^FS')
-        f.writelines('^FO210,210^A0,30^FDDt:'+date+'/'+shift+'^FS\n')
+        f.writelines('^XA^FO40,35^GFA,264,264,6,,L08,K01C,K07E,K0FF,J01FF8,J03FFC,J07FFE,J0JF,I01JF8,I03FE7FE,I07FC3FF,I0FF81FF8,001FF00FFC,003FE087FE,007FC1C3FF,00FF83E1FF8,01FF07F07FC,03FE0FF83FE,07FC1FFC1FF,07FC3FFE1FF,03FE7IF3FE,01NFC,00FF7IF7F8,007F3FFC7F,003F1FF87E,001F0FF07C,I0F07E078,I0703C07,I0301806,I01J04,,:I08,,I04,007FFC2114,0014084194,0034F83094,0024881094,I040804D6,,::^FS\n')
+        f.writelines('^FO100,40^A0,30^FDSAIL BSP^FS\n')
+        f.writelines('^FO40,90^A0,30^FDGrade:^FS\n')
+        f.writelines('^FO40,+125^A0,30^FD'+grade+'^FS\n')
+        f.writelines('^FO40,170^A0,30^FDDia:^FS\n')
+        f.writelines('^FO95,155^A0,50^FD'+dia+'^FS\n')
+        f.writelines('^FO165,170^A0,30^FDmm^FS')
+        f.writelines('^FO040,210^A0,30^FDDt:'+date+'/'+shift+'^FS\n')
         numb=str(i)
-        f.writelines('^FO210,250^A0,30^FDCoilNo:'+strand+numb+'^FS\n')
+        f.writelines('^FO040,255^A0,30^FDCoilNo:'+strand+numb+'^FS\n')
         # repositioned heat no
-        f.writelines('^FO210,310^A0,30^FDHeatNo:^FS\n')
-        f.writelines('^FO320,290^A0,90^FD'+heat+'^FS\n')
+        f.writelines('^FO040,315^A0,30^FDHeatNo:^FS\n')
+        f.writelines('^FO150,300^A0,80^FD'+heat+'^FS\n')
         # QR
-        f.writelines('^FO420,30^BQN,2,6^FDQA,HeatNo:'+heat+' Grade:'+grade+' CoilNo:'+strand+numb+' Dia:'+dia+'mm Date'+date+'/'+shift+'^FS\n^XZ\n\n')
+        f.writelines('^FO245,30^BQN,2,6^FDQA,HeatNo:'+heat+' Grade:'+grade+' CoilNo:'+strand+numb+' Dia:'+dia+'mm Date'+date+'/'+shift+'^FS\n^XZ\n\n')
         sqlstring = 'INSERT INTO T_QR_LABEL (id, HEAT, GRADE, DIA, COIL_NO, \
         STRAND) VALUES(NULL, "%s", "%s", "%s", "%s", "%s")\
         '%(heat, grade, dia, numb, strand)
@@ -109,7 +110,7 @@ strand_label = tk.Label(root, text = 'STRAND', font=('calibre',15, 'bold'))
 # creating a entry for input strand using widget Entry
 strand_entry = tk.Entry(root,textvariable = strand_var, font=('calibre',15,'normal'))
 
-# creating a label for first_coil using widget Label
+# creating a label for firstCoil using widget Label
 first_coil_label = tk.Label(root, text = 'FROM COIL', font=('calibre',15, 'bold'))
 # creating a entry for input first coil using widget Entry
 first_coil_entry = tk.Entry(root,textvariable = first_coil_var, font=('calibre',15,'normal'))
@@ -164,5 +165,5 @@ shift_label.grid(row=7,column=0)
 shift_entry.grid(row=7,column=1)
 sub_btn.grid(row=8,column=1)
 
-# infinite loop for the window to display
+# performing an infinite loop for the window to display
 root.mainloop()
