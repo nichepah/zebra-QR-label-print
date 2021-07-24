@@ -1,17 +1,26 @@
-# gui_3
+# 20210612
 # Author : Aneesh PA, RDCIS
-# 20210520
 # Takes input from user to print labels with QR
 # For WRM, BSP 
-# Remember 200 mm offset in the printer; try to reset it on site.
+# Remember 200 mm offset in the printer; try to reset it on site
+# Also note tkinter, tempFile
+# Database added 20210527
 
-import Tkinter as tk
+import tkinter as tk
 import os
+import sqlite3
+import datetime
+
+myDir="C:/Users/Administrator_TATA/Documents/pa/gui/"
+tempFile=myDir+"temp.txt"
+dbfile=myDir+"print_db.db"
 
 root=tk.Tk()
 
 # the windows size
 root.geometry("400x300")
+root.title("QR Label Designer, CYMS WRM BSP") 
+root.iconbitmap(myDir+'sail.ico')
 
 # declare string variable
 heat_var=tk.StringVar()
@@ -19,27 +28,47 @@ grade_var=tk.StringVar()
 dia_var=tk.StringVar()
 date_var=tk.StringVar()
 strand_var=tk.StringVar()
-firstCoil_var=tk.StringVar()
-coilCount_var=tk.StringVar()
+first_coil_var=tk.StringVar()
+last_coil_var=tk.StringVar()
 shift_var=tk.StringVar()
 
-tempFile="C:/Users/aapc-pa/Documents/mattrack/label_print_test/code_zpl/label/temp.txt"
+# checks if db exists
+dbexist=os.path.exists(dbfile)  
+db = sqlite3.connect(dbfile)
+cur=db.cursor()
+if not dbexist:
+    sqlstring = 'CREATE TABLE T_QR_LABEL \
+    (id INTEGER PRIMARY KEY, HEAT TEXT, GRADE TEXT, DIA TEXT, \
+    COIL_NO TEXT, STRAND TEXT, PRINT_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)'
+    cur.execute(sqlstring)
+    db.commit()
 
-def printLabel(heat, strand, firstCoil, coilCount, grade, dia, date, shift):
+def printLabel(heat, strand, first_coil, last_coil, grade, dia, date, shift):
     f=open(tempFile, "w")
-    myRange=range(int(coilCount))
+    myRange=range(int(first_coil), int(last_coil)+1)
     print(myRange)
     for i in myRange:
         f.writelines('CT~~CD,~CC^~CT~\n')
         f.writelines('^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0^XZ\n')
         f.writelines('^XA^FO210,35^GFA,264,264,6,,L08,K01C,K07E,K0FF,J01FF8,J03FFC,J07FFE,J0JF,I01JF8,I03FE7FE,I07FC3FF,I0FF81FF8,001FF00FFC,003FE087FE,007FC1C3FF,00FF83E1FF8,01FF07F07FC,03FE0FF83FE,07FC1FFC1FF,07FC3FFE1FF,03FE7IF3FE,01NFC,00FF7IF7F8,007F3FFC7F,003F1FF87E,001F0FF07C,I0F07E078,I0703C07,I0301806,I01J04,,:I08,,I04,007FFC2114,0014084194,0034F83094,0024881094,I040804D6,,::^FS\n')
-        f.writelines('^FO260,40^A0,40^FDSAIL BSP WRM^FS\n')
-        f.writelines('^FO210,100^A0,30^FDHEAT:'+heat+'/'+strand+str(int(firstCoil)+i)+'^FS\n')
-        f.writelines('^FO210,140^A0,30^FDGRADE:'+grade+'^FS\n')
-        f.writelines('^FO210,180^A0,30^FDDIA:'+dia+'^FS\n')
-        f.writelines('^FO210,220^A0,30^FDDATE:'+date+'^FS\n')
-        f.writelines('^FO210,260^A0,30^FDSHIFT:'+shift+'^FS\n')
-        f.writelines('^FO430,80^BQN,2,6^FDQA,HEAT:'+heat+'/'+strand+str(i+1)+';GRADE:'+grade+';DIA:'+dia+';DT:'+date+'/'+shift+'^FS\n^XZ\n')
+        f.writelines('^FO260,40^A0,30^FDSAIL BSP^FS\n')
+        f.writelines('^FO210,100^A0,30^FDGr:'+grade+'^FS\n')
+        f.writelines('^FO210,160^A0,30^FDDia:^FS\n')
+        f.writelines('^FO265,145^A0,50^FD'+dia+'^FS\n')
+        f.writelines('^FO335,160^A0,30^FDmm^FS')
+        f.writelines('^FO210,210^A0,30^FDDt:'+date+'/'+shift+'^FS\n')
+        numb=str(i)
+        f.writelines('^FO210,250^A0,30^FDCoilNo:'+strand+numb+'^FS\n')
+        # repositioned heat no
+        f.writelines('^FO210,310^A0,30^FDHeatNo:^FS\n')
+        f.writelines('^FO320,290^A0,90^FD'+heat+'^FS\n')
+        # QR
+        f.writelines('^FO420,30^BQN,2,6^FDQA,HeatNo:'+heat+' Grade:'+grade+' CoilNo:'+strand+numb+' Dia:'+dia+'mm Date'+date+'/'+shift+'^FS\n^XZ\n\n')
+        sqlstring = 'INSERT INTO T_QR_LABEL (id, HEAT, GRADE, DIA, COIL_NO, \
+        STRAND) VALUES(NULL, "%s", "%s", "%s", "%s", "%s")\
+        '%(heat, grade, dia, numb, strand)
+        cur.execute(sqlstring)
+        db.commit()
     f.close()
     os.startfile(tempFile, "print")
 
@@ -47,28 +76,28 @@ def printLabel(heat, strand, firstCoil, coilCount, grade, dia, date, shift):
 def submit():
     heat=heat_var.get()
     strand=strand_var.get()
-    firstCoil=firstCoil_var.get()
-    coilCount=coilCount_var.get()
+    first_coil=first_coil_var.get()
+    last_coil=last_coil_var.get()
     grade=grade_var.get()
     dia=dia_var.get()
     date=date_var.get()
     shift=shift_var.get()
     print("heat : " + heat)
     print("strand : " + strand)
-    print("firstCoil : " + firstCoil)
-    print("coilCount : " + coilCount)
+    print("first_coil : " + first_coil)
+    print("last_coil : " + last_coil)
     print("grade : " + grade)
     print("dia : " + dia)
     print("date : " + date)
     heat_var.set("")
     strand_var.set("")
-    firstCoil_var.set("")
-    coilCount_var.set("")    
+    first_coil_var.set("")
+    last_coil_var.set("")    
     grade_var.set("")
     dia_var.set("")
     date_var.set("")
     shift_var.set("")
-    printLabel(heat, strand, firstCoil, coilCount, grade, dia, date, shift)
+    printLabel(heat, strand, first_coil, last_coil, grade, dia, date, shift)
 	
 # creating a label for heat using widget Label
 heat_label = tk.Label(root, text = 'HEAT', font=('calibre',15, 'bold'))
@@ -80,15 +109,15 @@ strand_label = tk.Label(root, text = 'STRAND', font=('calibre',15, 'bold'))
 # creating a entry for input strand using widget Entry
 strand_entry = tk.Entry(root,textvariable = strand_var, font=('calibre',15,'normal'))
 
-# creating a label for firstCoil using widget Label
-firstCoil_label = tk.Label(root, text = 'FIRST COIL', font=('calibre',15, 'bold'))
+# creating a label for first_coil using widget Label
+first_coil_label = tk.Label(root, text = 'FROM COIL', font=('calibre',15, 'bold'))
 # creating a entry for input first coil using widget Entry
-firstCoil_entry = tk.Entry(root,textvariable = firstCoil_var, font=('calibre',15,'normal'))
+first_coil_entry = tk.Entry(root,textvariable = first_coil_var, font=('calibre',15,'normal'))
 
 # creating a label for coil count using widget Label
-coilCount_label = tk.Label(root, text = 'COIL COUNT', font=('calibre',15, 'bold'))
+last_coil_label = tk.Label(root, text = 'TO COIL', font=('calibre',15, 'bold'))
 # creating a entry for input heat using widget Entry
-coilCount_entry = tk.Entry(root,textvariable = coilCount_var, font=('calibre',15,'normal'))
+last_coil_entry = tk.Entry(root,textvariable = last_coil_var, font=('calibre',15,'normal'))
 
 # grade Label
 grade_label = tk.Label(root, text = 'GRADE', font=('calibre',15, 'bold'))
@@ -121,10 +150,10 @@ heat_label.grid(row=0,column=0)
 heat_entry.grid(row=0,column=1)
 strand_label.grid(row=1,column=0)
 strand_entry.grid(row=1,column=1)
-firstCoil_label.grid(row=2,column=0)
-firstCoil_entry.grid(row=2,column=1)
-coilCount_label.grid(row=3,column=0)
-coilCount_entry.grid(row=3,column=1)
+first_coil_label.grid(row=2,column=0)
+first_coil_entry.grid(row=2,column=1)
+last_coil_label.grid(row=3,column=0)
+last_coil_entry.grid(row=3,column=1)
 grade_label.grid(row=4,column=0)
 grade_entry.grid(row=4,column=1)
 dia_label.grid(row=5,column=0)
@@ -135,5 +164,5 @@ shift_label.grid(row=7,column=0)
 shift_entry.grid(row=7,column=1)
 sub_btn.grid(row=8,column=1)
 
-# performing an infinite loop for the window to display
+# infinite loop for the window to display
 root.mainloop()
