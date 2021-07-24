@@ -1,5 +1,5 @@
 # Author : Aneesh PA, RDCIS
-# 20210625
+# 20210626
 # Takes input from user to print labels with QR
 # For WRM, BSP 
 # Remember 200 mm offset in the printer; try to reset it on site.
@@ -50,21 +50,21 @@ def printLabel(heat, strand, first_coil, last_coil, grade, dia, date, shift):
     for i in myRange:
         f.writelines('CT~~CD,~CC^~CT~\n')
         f.writelines('^XA~TA000~JSN^LT0^MNW^MTT^PON^PMN^LH0,0^JMA^PR5,5~SD15^JUS^LRN^CI0^XZ\n')
-        f.writelines('^XA^FO40,35^GFA,264,264,6,,L08,K01C,K07E,K0FF,J01FF8,J03FFC,J07FFE,J0JF,I01JF8,I03FE7FE,I07FC3FF,I0FF81FF8,001FF00FFC,003FE087FE,007FC1C3FF,00FF83E1FF8,01FF07F07FC,03FE0FF83FE,07FC1FFC1FF,07FC3FFE1FF,03FE7IF3FE,01NFC,00FF7IF7F8,007F3FFC7F,003F1FF87E,001F0FF07C,I0F07E078,I0703C07,I0301806,I01J04,,:I08,,I04,007FFC2114,0014084194,0034F83094,0024881094,I040804D6,,::^FS\n')
-        f.writelines('^FO100,40^A0,30^FDSAIL BSP^FS\n')
-        f.writelines('^FO40,90^A0,30^FDGrade:^FS\n')
-        f.writelines('^FO40,+125^A0,30^FD'+grade+'^FS\n')
-        f.writelines('^FO40,170^A0,30^FDDia:^FS\n')
-        f.writelines('^FO95,155^A0,50^FD'+dia+'^FS\n')
-        f.writelines('^FO165,170^A0,30^FDmm^FS')
-        f.writelines('^FO040,210^A0,30^FDDt:'+date+'/'+shift+'^FS\n')
+        f.writelines('^XA^FO190,35^GFA,264,264,6,,L08,K01C,K07E,K0FF,J01FF8,J03FFC,J07FFE,J0JF,I01JF8,I03FE7FE,I07FC3FF,I0FF81FF8,001FF00FFC,003FE087FE,007FC1C3FF,00FF83E1FF8,01FF07F07FC,03FE0FF83FE,07FC1FFC1FF,07FC3FFE1FF,03FE7IF3FE,01NFC,00FF7IF7F8,007F3FFC7F,003F1FF87E,001F0FF07C,I0F07E078,I0703C07,I0301806,I01J04,,:I08,,I04,007FFC2114,0014084194,0034F83094,0024881094,I040804D6,,::^FS\n')
+        f.writelines('^FO250,40^A0,30^FDSAIL BSP^FS\n')
+        f.writelines('^FO190,90^A0,30^FDGrade:^FS\n')
+        f.writelines('^FO190,+125^A0,30^FD'+grade+'^FS\n')
+        f.writelines('^FO190,170^A0,30^FDDia:^FS\n')
+        f.writelines('^FO255,155^A0,50^FD'+dia+'^FS\n')
+        f.writelines('^FO302,170^A0,30^FDmm^FS')
+        f.writelines('^FO190,210^A0,30^FDDt:'+date+'/'+shift+'^FS\n')
         numb=str(i)
-        f.writelines('^FO040,255^A0,30^FDCoilNo:'+strand+numb+'^FS\n')
+        f.writelines('^FO190,255^A0,30^FDCoilNo:'+strand+numb+'^FS\n')
         # repositioned heat no
-        f.writelines('^FO040,315^A0,30^FDHeatNo:^FS\n')
-        f.writelines('^FO150,300^A0,80^FD'+heat+'^FS\n')
+        f.writelines('^FO190,315^A0,30^FDHeatNo:^FS\n')
+        f.writelines('^FO300,300^A0,80^FD'+heat+'^FS\n')
         # QR
-        f.writelines('^FO245,30^BQN,2,6^FDQA,HeatNo:'+heat+' Grade:'+grade+' CoilNo:'+strand+numb+' Dia:'+dia+'mm Date'+date+'/'+shift+'^FS\n^XZ\n\n')
+        f.writelines('^FO395,30^BQN,2,6^FDQA,HeatNo:'+heat+' Grade:'+grade+' CoilNo:'+strand+numb+' Dia:'+dia+'mm Date'+date+'/'+shift+'^FS\n^XZ\n\n')
         sqlstring = 'INSERT INTO T_QR_LABEL (id, HEAT, GRADE, DIA, COIL_NO, \
         STRAND) VALUES(NULL, "%s", "%s", "%s", "%s", "%s")\
         '%(heat, grade, dia, numb, strand)
